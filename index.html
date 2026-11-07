@@ -30,25 +30,83 @@ button.act.sec{background:transparent;color:var(--acc);border:1px solid var(--ac
 .msg.busy{background:#eef2f8;color:var(--acc);border:1px solid var(--line)}
 pre.sum{background:#0f1218;color:#d7e3f4;border-radius:10px;padding:10px;font-size:12px;overflow:auto;max-height:260px}
 .pill{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--acc);border-radius:20px;padding:3px 9px;margin-left:6px}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background:#eef1f6;padding:1px 4px;border-radius:4px;word-break:break-all}
 </style>
 </head>
 <body>
 <header>
   <h1>Lab Data Entry <span class="pill">cloud writer</span></h1>
   <div class="tabs" id="tabs">
-    <button data-t="shift" class="on">Shift Hourly Report</button>
-    <button data-t="soap">Soap Bar Daily Log</button>
+    <button data-t="soap" class="on">Soap Bar Daily Log</button>
+    <button data-t="shift">Shift Hourly Report</button>
   </div>
 </header>
 <main>
   <div class="card">
     <label>PIN (the cloud encryption PIN - default 2780)</label>
     <input id="pin" type="text" inputmode="numeric" value="2780">
-    <div class="hint" id="net"></div>
   </div>
 
+  <!-- ================= SOAP ================= -->
+  <section id="p-soap">
+    <div class="card">
+      <h2>Line - batch and weights</h2>
+      <div class="row">
+        <div><label>Shift</label><select id="o-shift"><option value="1">1 (A - 08:30)</option><option value="2">2 (B - 17:30)</option><option value="3">3 (C - 00:30)</option></select></div>
+        <div><label>Line</label><select id="o-line"><option value="1">1 - Savannah</option><option value="2">2 - Savannah (771)</option><option value="3">3 - Royal / Lemon</option></select></div>
+        <div><label>Batch</label><select id="o-batch"><option value="1">1 (hours 1-3)</option><option value="2">2 (hours 4-6)</option><option value="3">3 (hours 7-8)</option></select></div>
+      </div>
+      <div id="o-varbox" hidden>
+        <label>Line 3 product</label>
+        <select id="o-var"><option value="royal">Royal (90-10) - 6 soaps</option><option value="lemon">Savannah Lemon Blossom&amp;Orange - 5 soaps</option></select>
+      </div>
+      <label>Weights (comma separated) - the scale reads one decimal, so tick +0.01</label>
+      <input id="o-w" type="text" inputmode="decimal" placeholder="109.5,109.6,109.7">
+      <label class="hint" style="display:flex;align-items:center;gap:6px;margin-top:6px"><input id="o-fix" type="checkbox" style="width:auto" checked> add 0.01 to the paper weight (109.5 &rarr; 109.51)</label>
+      <div class="row">
+        <div><label>Product name (optional)</label><input id="o-p" type="text" placeholder="Savannah Classic"></div>
+        <div><label>Batch No. (optional)</label><input id="o-bn" type="text" inputmode="numeric" placeholder="3100241611"></div>
+      </div>
+      <div class="row">
+        <div><label>M/C moisture (optional)</label><input id="o-m" type="number" step="0.01" inputmode="decimal"></div>
+        <div><label>FFA (optional)</label><input id="o-ffa" type="number" step="0.001" inputmode="decimal"></div>
+        <div><label>FA (optional)</label><input id="o-fa" type="number" step="0.001" inputmode="decimal"></div>
+      </div>
+      <button class="act" id="o-save">Save the line to the cloud</button>
+      <div class="hint"><button class="act sec" id="undo-soap" style="display:none;width:auto;padding:6px 12px;font-size:12px">Undo the last change</button></div>
+      <div class="hint">Only the boxes you fill are written. The other weights, the batch number and the other lines stay exactly as they are in the cloud.</div>
+    </div>
+
+    <div class="card">
+      <h2>Line settings - the bases the app fills the table with</h2>
+      <div class="row">
+        <div><label>Shift</label><select id="q-shift"><option value="1">1 (A)</option><option value="2">2 (B)</option><option value="3">3 (C)</option></select></div>
+        <div><label>Line</label><select id="q-line"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+      </div>
+      <div class="row"><input id="q-chl" type="number" step="0.01" inputmode="decimal" placeholder="Cl base"><input id="q-chlv" type="number" step="0.01" inputmode="decimal" placeholder="Cl +/-"></div>
+      <div class="row"><input id="q-gly" type="number" step="0.01" inputmode="decimal" placeholder="Gly base"><input id="q-glyv" type="number" step="0.01" inputmode="decimal" placeholder="Gly +/-"></div>
+      <div class="row"><input id="q-tmp" type="number" step="0.01" inputmode="decimal" placeholder="Temp base"><input id="q-tmpv" type="number" step="0.01" inputmode="decimal" placeholder="Temp +/-"></div>
+      <div class="row"><input id="q-amin" type="number" step="0.01" inputmode="decimal" placeholder="Avgr min"><input id="q-amax" type="number" step="0.01" inputmode="decimal" placeholder="Avgr max"></div>
+      <button class="act" id="q-save">Save the line settings</button>
+      <div class="hint">Leave a box empty to keep the value that is already in the cloud.</div>
+    </div>
+
+    <div class="card">
+      <h2>Shift settings</h2>
+      <div class="row">
+        <div><label>Shift</label><select id="d-shift"><option value="1">1 (A)</option><option value="2">2 (B)</option><option value="3">3 (C)</option></select></div>
+        <div><label>Date</label><input id="d-date" type="text" placeholder="DD/MM/YYYY"></div>
+      </div>
+      <div class="row">
+        <div><label>Variation +/-</label><input id="d-var" type="number" step="0.01" inputmode="decimal"></div>
+        <div><label>Test hours (Cl / Gly / TFM)</label><input id="d-tests" type="text" placeholder="17:30"></div>
+      </div>
+      <button class="act" id="d-save">Save the shift settings</button>
+    </div>
+  </section>
+
   <!-- ================= SHIFT ================= -->
-  <section id="p-shift">
+  <section id="p-shift" hidden>
     <div class="card">
       <h2>One hour of the shift</h2>
       <div class="row">
@@ -65,45 +123,9 @@ pre.sum{background:#0f1218;color:#d7e3f4;border-radius:10px;padding:10px;font-si
       </div>
       <label>Plodder analysis (optional) - CL, Gly, EDTA, TFM</label>
       <div class="row"><input id="s-cl" type="number" step="0.001" inputmode="decimal" placeholder="CL"><input id="s-gly" type="number" step="0.001" inputmode="decimal" placeholder="Gly"><input id="s-edta" type="number" step="0.001" inputmode="decimal" placeholder="EDTA"><input id="s-tfm" type="number" step="0.001" inputmode="decimal" placeholder="TFM"></div>
-      <div class="hint">Leave a box empty to keep the value that is already in the cloud. The TFM is calculated only when it is empty in the cloud (the same rule as the app) - type a TFM only if you want to keep your own number.</div>
+      <div class="hint">Leave the boxes empty to keep the value that is already in the cloud. The TFM is calculated only when it is empty in the cloud (the same rule as the app) - type a TFM only if you want to keep your own number.</div>
       <button class="act" id="s-save">Save this hour to the cloud</button>
       <div class="hint"><button class="act sec" id="undo-shift" style="display:none;width:auto;padding:6px 12px;font-size:12px">Undo the last change</button></div>
-      <div class="hint">The TFM is left alone if the cloud already has one.</div>
-    </div>
-  </section>
-
-  <!-- ================= SOAP ================= -->
-  <section id="p-soap" hidden>
-    <div class="card">
-      <h2>Line weights</h2>
-      <div class="row">
-        <div><label>Shift</label><select id="o-shift"><option value="1">1 (A)</option><option value="2">2 (B)</option><option value="3">3 (C)</option></select></div>
-        <div><label>Line</label><select id="o-line"><option value="1">1</option><option value="2">2</option><option value="3">3 (Royal)</option></select></div>
-        <div><label>Batch</label><select id="o-batch"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
-      </div>
-      <label>Weights (comma separated) - the scale reads one decimal, so tick +0.01</label>
-      <input id="o-w" type="text" inputmode="decimal" placeholder="109.5,109.6,109.7">
-      <label class="hint" style="display:flex;align-items:center;gap:6px;margin-top:6px"><input id="o-fix" type="checkbox" style="width:auto" checked> add 0.01 to the paper weight (109.5 &rarr; 109.51)</label>
-      <button class="act" id="o-save">Save the weights to the cloud</button>
-      <div class="hint"><button class="act sec" id="undo-soap" style="display:none;width:auto;padding:6px 12px;font-size:12px">Undo the last change</button></div>
-    </div>
-    <div class="card">
-      <h2>Line analysis (QC)</h2>
-      <div class="row">
-        <div><label>Shift</label><select id="q-shift"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
-        <div><label>Line</label><select id="q-line"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
-      </div>
-      <div class="row"><input id="q-chl" type="number" step="0.001" inputmode="decimal" placeholder="Cl"><input id="q-gly" type="number" step="0.001" inputmode="decimal" placeholder="Gly"><input id="q-tmp" type="number" step="0.001" inputmode="decimal" placeholder="Temp"></div>
-      <div class="row"><input id="q-fa" type="number" step="0.001" inputmode="decimal" placeholder="FA"><input id="q-moi" type="number" step="0.001" inputmode="decimal" placeholder="Moisture"></div>
-      <button class="act" id="q-save">Save the analysis to the cloud</button>
-    </div>
-    <div class="card">
-      <h2>Date of a shift</h2>
-      <div class="row">
-        <div><label>Shift</label><select id="d-shift"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
-        <div><label>Date</label><input id="d-date" type="text" placeholder="DD/MM/YYYY"></div>
-      </div>
-      <button class="act sec" id="d-save">Save the date</button>
     </div>
   </section>
 
@@ -115,12 +137,12 @@ pre.sum{background:#0f1218;color:#d7e3f4;border-radius:10px;padding:10px;font-si
   <div class="card">
     <h2>Links with the values already filled</h2>
     <div class="hint" style="margin:0">
-      Shift hour (moisture / FA of the reactor and the plodder, then the analysis CL / Gly / EDTA / TFM):<br>
-      <code>?app=shift&amp;shift=A&amp;hour=10&amp;r=25,0.1&amp;p=14.5,0.05&amp;t=0.6,8.2,0.07</code><br>
+      Soap line (weights + batch): <code>?app=soap&amp;oshift=1&amp;line=1&amp;batch=1&amp;w=109.5,109.6&amp;fix=1&amp;bn=3100241611&amp;m=16.5&amp;fa=0.05</code><br>
+      Line 3 lemon: add <code>&amp;vr=lemon</code><br>
+      Line settings: <code>?app=soap&amp;qshift=1&amp;qline=1&amp;chl=0.55&amp;chlv=0.1&amp;gly=7.55&amp;glyv=0.1&amp;tmp=45&amp;tmpv=0.5&amp;amin=109.5&amp;amax=110.5</code><br>
+      Shift settings: <code>?app=soap&amp;dshift=1&amp;date=07/11/2026&amp;var=0.2&amp;tests=17:30</code><br>
+      Shift hour: <code>?app=shift&amp;shift=A&amp;hour=10&amp;r=25,0.1&amp;p=14.5,0.05&amp;t=0.6,8.2,0.07</code><br>
       <code>&amp;go=1</code> saves it as soon as the page opens (the page still asks to confirm).<br><br>
-      Soap weights: <code>?app=soap&amp;oshift=1&amp;line=1&amp;batch=1&amp;w=109.5,109.6&amp;fix=1</code><br>
-      Soap analysis: <code>?app=soap&amp;qshift=1&amp;qline=1&amp;chl=0.6&amp;gly=8.2&amp;tmp=38&amp;fa=1.2&amp;moi=16.5</code><br>
-      Date: <code>?app=soap&amp;dshift=1&amp;date=07/11/2026</code><br><br>
       The page only changes the boxes you filled - everything else in the cloud stays as it is.
     </div>
   </div>
@@ -149,7 +171,7 @@ async function pull(url,pin){
  var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(body.iv)},k,unb64(body.ct));
  return{body:body,plain:JSON.parse(new TextDecoder().decode(pt))};
 }
-async function push(url,body,plain,pin,app){
+async function push(url,body,plain,pin){
  var k=await key(body.salt,pin);                 /* the same salt - the apps keep it */
  var iv=crypto.getRandomValues(new Uint8Array(12));
  var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,new TextEncoder().encode(JSON.stringify(plain)));
@@ -157,6 +179,31 @@ async function push(url,body,plain,pin,app){
  var r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(out)});
  if(!r.ok)throw new Error('HTTP '+r.status+' writing the cloud');
  return out;
+}
+/* ---------------- helpers ---------------- */
+function $(id){return document.getElementById(id)}
+function val(id){var v=$(id).value;return v===''||v===null?null:v}
+function num(v){var n=parseFloat(v);return isNaN(n)?null:n}
+function pin(){return ($('pin').value||'2780').trim()}
+function msg(t,kind){$('msg').innerHTML='<div class="msg '+(kind||'busy')+'">'+t+'</div>'}
+function paper(v){
+ var s=String(v).trim(),dec=(s.split('.')[1]||'').length;
+ if(dec===1)return s+'1';
+ if(dec===0)return s+'.01';
+ return s;
+}
+/* the bucket rule of the app - index.html syncBucket() */
+function soapBucket(id,variant){
+ var v=/l3/.test(id)?(variant==='lemon'?'L':'R'):'';
+ var m=id.match(/s(\d)b\d/);if(m)return 'S'+m[1]+v;
+ m=id.match(/^(?:date|var|tests)(\d)/);if(m)return 'S'+m[1]+v;
+ m=id.match(/^[a-z]+(\d)l\d/);if(m)return 'S'+m[1]+v;
+ return 'G'+v;
+}
+function setField(plain,bucket,key,value){
+ var b=(plain.b=plain.b||{})[bucket]||((plain.b[bucket]={v:{},t:{}}));
+ b.v=b.v||{};b.v[key]=String(value);
+ (plain.ts=plain.ts||{})[bucket]=Date.now();
 }
 function backup(app,plain){try{localStorage.setItem('labdata_bak_'+app,JSON.stringify({plain:JSON.parse(JSON.stringify(plain)),ts:Date.now()}));showUndo(app)}catch(e){}}
 async function undo(app){
@@ -167,19 +214,11 @@ async function undo(app){
  msg('Restoring...','busy');
  try{
   var got=await pull(c.url,p);
-  await push(c.url,got.body,JSON.parse(raw).plain,p,app);
+  await push(c.url,got.body,JSON.parse(raw).plain,p);
   msg('Restored. Read the cloud to check.','ok');
  }catch(e){msg('ERROR: '+e.message,'bad')}
 }
-function showUndo(app){
- var u=$('undo-'+app);if(u)u.style.display='inline-block';
-}
-/* ---------------- helpers ---------------- */
-function $(id){return document.getElementById(id)}
-function val(id){var v=$(id).value;return v===''||v===null?null:v}
-function num(v){var n=parseFloat(v);return isNaN(n)?null:n}
-function pin(){return ($('pin').value||'2780').trim()}
-function msg(t,kind){$('msg').innerHTML='<div class="msg '+(kind||'busy')+'">'+t+'</div>'}
+function showUndo(app){var u=$('undo-'+app);if(u)u.style.display='inline-block'}
 function tfm(v){  /* the app's own formula - index.html tfmCore */
  var m=num(v[3]),cl=num(v[8]),g=num(v[9]),e=num(v[10]);
  if(m===null||cl===null||g===null||e===null)return null;  /* Moisture / Cl / Gly / EDTA are needed */
@@ -188,24 +227,90 @@ function tfm(v){  /* the app's own formula - index.html tfmCore */
  var sum=0;t.forEach(function(x){sum+=x});sum=Math.round(sum*10000)/10000;
  return((100-sum)/1.086).toFixed(2);
 }
-function paper(v){
- var s=String(v).trim(),dec=(s.split('.')[1]||'').length;
- if(dec===1)return s+'1';
- if(dec===0)return s+'.01';
- return s;
+/* ---------------- soap: line + batch + weights ---------------- */
+async function doLine(){
+ var sh=$('o-shift').value,ln=$('o-line').value,bt=$('o-batch').value;
+ var vr=$('o-var').value;
+ var pfx='l'+ln+'s'+sh+'b'+bt;
+ var vals=($('o-w').value||'').split(',').map(function(s){return s.trim()}).filter(function(s){return s!==''});
+ var fix=$('o-fix').checked;
+ var c=CFG.soap,p=pin();
+ var lines=[];
+ vals.forEach(function(v,i){lines.push('weight '+(i+1)+' = '+(fix?paper(v):v))});
+ var extra={};
+ if(val('o-p')!==null)extra['Product name']=$('o-p').value;
+ if(val('o-bn')!==null)extra['Batch No.']=$('o-bn').value;
+ if(val('o-m')!==null)extra['M/C moisture']=$('o-m').value;
+ if(val('o-ffa')!==null)extra['FFA']=$('o-ffa').value;
+ if(val('o-fa')!==null)extra['FA']=$('o-fa').value;
+ for(var k in extra)lines.push(k+' = '+extra[k]);
+ if(!lines.length){msg('Type at least one weight or one batch value.','bad');return}
+ if(!confirm('Save to the cloud?\n\nline '+ln+(ln==='3'?' ('+vr+')':'')+' - shift '+sh+' - batch '+bt+'\n'+lines.join('\n')+'\n\n(everything else stays as it is)'))return;
+ msg('Saving...','busy');
+ try{
+  var got=await pull(c.url,p);
+  backup('soap',got.plain);
+  vals.forEach(function(v,i){
+   var id=pfx+'_c'+i;
+   setField(got.plain,soapBucket(id,vr),id,fix?paper(v):v);
+  });
+  if(val('o-p')!==null)setField(got.plain,soapBucket(pfx+'_p',vr),pfx+'_p',$('o-p').value);
+  if(val('o-bn')!==null)setField(got.plain,soapBucket(pfx+'_bn',vr),pfx+'_bn',$('o-bn').value);
+  if(val('o-m')!==null)setField(got.plain,soapBucket(pfx+'_m',vr),pfx+'_m',$('o-m').value);
+  if(val('o-ffa')!==null)setField(got.plain,soapBucket(pfx+'_ffa',vr),pfx+'_ffa',$('o-ffa').value);
+  if(val('o-fa')!==null)setField(got.plain,soapBucket(pfx+'_fa',vr),pfx+'_fa',$('o-fa').value);
+  await push(c.url,got.body,got.plain,p);
+  var back=await pull(c.url,p);
+  var out={},ids=[];
+  vals.forEach(function(v,i){ids.push(pfx+'_c'+i)});
+  ['p','bn','m','ffa','fa'].forEach(function(k){if(ids.indexOf(pfx+'_'+k)<0)ids.push(pfx+'_'+k)});
+  ids.forEach(function(id){var bk=soapBucket(id,vr);var v=(back.plain.b[bk]||{v:{}}).v[id];if(v!==undefined)out[id]=v});
+  msg('Saved to the cloud\n'+JSON.stringify(out),'ok');
+ }catch(e){msg('ERROR: '+e.message,'bad')}
 }
-function soapBucket(id,variant){
- var v=/l3/.test(id)?(variant==='lemon'?'L':'R'):'';
- var m=id.match(/s(\d)b\d/);if(m)return'S'+m[1]+v;
- m=id.match(/^(?:date|var|tests)(\d)/);if(m)return'S'+m[1]+v;
- m=id.match(/^[a-z]+(\d)l\d/);if(m)return'S'+m[1]+v;
- return'G'+v;
+/* ---------------- soap: line settings ---------------- */
+async function doSettings(){
+ var sh=$('q-shift').value,ln=$('q-line').value,vr=$('o-var').value;
+ var map={chl:'q-chl',chlv:'q-chlv',gly:'q-gly',glyv:'q-glyv',tmp:'q-tmp',tmpv:'q-tmpv',amin:'q-amin',amax:'q-amax'},vals={},any=false;
+ for(var k in map){var v=val(map[k]);if(v!==null){vals[k]=v;any=true}}
+ if(!any){msg('Fill at least one value.','bad');return}
+ var c=CFG.soap,p=pin();
+ if(!confirm('Save these line settings to the cloud?\n\nshift '+sh+' - line '+ln+'\n'+JSON.stringify(vals)))return;
+ msg('Saving...','busy');
+ try{
+  var got=await pull(c.url,p);
+  backup('soap',got.plain);
+  var out={};
+  for(var k2 in vals){var id=k2+sh+'l'+ln;setField(got.plain,soapBucket(id,vr),id,vals[k2]);out[id]=vals[k2]}
+  await push(c.url,got.body,got.plain,p);
+  var back=await pull(c.url,p);
+  for(var k3 in out){var bk=soapBucket(k3+sh+'l'+ln,vr);out[k3+sh+'l'+ln]=(back.plain.b[bk]||{v:{}}).v[k3+sh+'l'+ln]}
+  msg('Saved to the cloud\n'+JSON.stringify(out),'ok');
+ }catch(e){msg('ERROR: '+e.message,'bad')}
 }
-function setField(plain,bucket,key,value){
- var b=(plain.b=plain.b||{})[bucket]||((plain.b[bucket]={v:{},t:{}}));
- b.v=b.v||{};b.v[key]=String(value);
- (plain.ts=plain.ts||{})[bucket]=Date.now();
+/* ---------------- soap: shift settings ---------------- */
+async function doShiftSettings(){
+ var sh=$('d-shift').value,vr=$('o-var').value;
+ var vals={},any=false;
+ if(val('d-date')!==null){vals['date'+sh]=$('d-date').value;any=true}
+ if(val('d-var')!==null){vals['var'+sh]=$('d-var').value;any=true}
+ if(val('d-tests')!==null){vals['tests'+sh]=$('d-tests').value;any=true}
+ if(!any){msg('Fill at least one value.','bad');return}
+ var c=CFG.soap,p=pin();
+ if(!confirm('Save these shift settings to the cloud?\n\nshift '+sh+'\n'+JSON.stringify(vals)))return;
+ msg('Saving...','busy');
+ try{
+  var got=await pull(c.url,p);
+  backup('soap',got.plain);
+  var out={};
+  for(var id in vals){setField(got.plain,soapBucket(id,vr),id,vals[id]);out[id]=vals[id]}
+  await push(c.url,got.body,got.plain,p);
+  var back=await pull(c.url,p);
+  for(var id2 in out){var bk=soapBucket(id2,vr);out[id2]=(back.plain.b[bk]||{v:{}}).v[id2]}
+  msg('Saved to the cloud\n'+JSON.stringify(out),'ok');
+ }catch(e){msg('ERROR: '+e.message,'bad')}
 }
+/* ---------------- shift: one hour ---------------- */
 function setShift(plain,s,hour,vals){
  var sh=(plain.shifts=plain.shifts||{})[s];
  if(!sh)throw new Error('no shift '+s);
@@ -231,7 +336,6 @@ function setShift(plain,s,hour,vals){
  plain.ts=Date.now();sh.ts=Date.now();
  return touched;
 }
-/* ---------------- actions ---------------- */
 async function doShift(){
  var s=$('s-shift').value,hour=String(parseInt($('s-hour').value,10)||0);
  var vals={rm:val('s-rm'),rf:val('s-rf'),pm:val('s-pm'),pf:val('s-pf'),cl:val('s-cl'),gly:val('s-gly'),edta:val('s-edta'),tfm:val('s-tfm')};
@@ -251,72 +355,19 @@ async function doShift(){
   msg('Saved to the cloud'+(same?'':' - CHECK IT')+' - shift '+s+' '+hour+':00\nchanged: '+(touched.length?touched.join(', '):'nothing')+'\n'+JSON.stringify(back.plain.shifts[s].d[hour].v),same?'ok':'bad');
  }catch(e){msg('ERROR: '+e.message,'bad')}
 }
-async function doWeights(){
- var sh=$('o-shift').value,ln=$('o-line').value,bt=$('o-batch').value;
- var vals=($('o-w').value||'').split(',').map(function(s){return s.trim()}).filter(function(s){return s!==''});
- if(!vals.length){msg('Type at least one weight.','bad');return}
- var fix=$('o-fix').checked;
- var c=CFG.soap,p=pin();
- var text=vals.map(function(v){return fix?paper(v):v}).join(', ');
- if(!confirm('Save these weights to the cloud?\n\nline '+ln+' - shift '+sh+' - batch '+bt+'\n'+text+'\n\n(the batch number and the other weights stay as they are)'))return;
- msg('Saving...','busy');
- try{
-  var got=await pull(c.url,p);
-  backup('soap',got.plain);
-  var variant='royal';
-  vals.forEach(function(v,i){setField(got.plain,soapBucket('l'+ln+'s'+sh+'b'+bt+'_c'+i,variant),'l'+ln+'s'+sh+'b'+bt+'_c'+i,fix?paper(v):v)});
-  await push(c.url,got.body,got.plain,p);
-  var back=await pull(c.url,p);
-  var bk=soapBucket('l'+ln+'s'+sh+'b'+bt+'_c0',variant);
-  var got2=JSON.stringify((back.plain.b[bk]||{v:{}}).v);
-  msg('Saved to the cloud\n'+got2,'ok');
- }catch(e){msg('ERROR: '+e.message,'bad')}
-}
-async function doQc(){
- var sh=$('q-shift').value,ln=$('q-line').value;
- var map={chl:'q-chl',gly:'q-gly',tmp:'q-tmp',fa:'q-fa',moi:'q-moi'},vals={},any=false;
- for(var k in map){var v=val(map[k]);if(v!==null){vals[k]=v;any=true}}
- if(!any){msg('Fill at least one analysis value.','bad');return}
- var c=CFG.soap,p=pin();
- if(!confirm('Save this analysis to the cloud?\n\nline '+ln+' - shift '+sh+'\n'+JSON.stringify(vals)))return;
- msg('Saving...','busy');
- try{
-  var got=await pull(c.url,p);
-  backup('soap',got.plain);
-  for(var k2 in vals)setField(got.plain,soapBucket(k2+sh+'l'+ln,'royal'),k2+sh+'l'+ln,vals[k2]);
-  await push(c.url,got.body,got.plain,p);
-  var back=await pull(c.url,p);
-  var out={};
-  for(var k3 in vals){var bk=soapBucket(k3+sh+'l'+ln,'royal');out[k3]=(back.plain.b[bk]||{v:{}}).v[k3+sh+'l'+ln]}
-  msg('Saved to the cloud\n'+JSON.stringify(out),'ok');
- }catch(e){msg('ERROR: '+e.message,'bad')}
-}
-async function doDate(){
- var sh=$('d-shift').value,d=($('d-date').value||'').trim();
- if(!d){msg('Type the date (DD/MM/YYYY).','bad');return}
- var c=CFG.soap,p=pin();
- if(!confirm('Save the date '+d+' for shift '+sh+'?'))return;
- msg('Saving...','busy');
- try{
-  var got=await pull(c.url,p);
-  backup('soap',got.plain);
-  setField(got.plain,soapBucket('date'+sh,'royal'),'date'+sh,d);
-  await push(c.url,got.body,got.plain,p);
-  msg('Saved to the cloud','ok');
- }catch(e){msg('ERROR: '+e.message,'bad')}
-}
+/* ---------------- read ---------------- */
 async function doRead(){
  msg('Reading...','busy');
  try{
-  var c=CFG.tab==='soap'?CFG.soap:CFG.shift,p=pin();
+  var c=CFG[CFG.tab]==='soap'?CFG.soap:CFG.shift,p=pin();
   var got=await pull(c.url,p);
   var d=$('dump');d.style.display='block';
   d.textContent=JSON.stringify(got.plain,null,1);
-  msg('Read '+c.tab+' from the cloud','ok');
+  msg('Read '+(CFG.tab==='soap'?'soap':'shift')+' from the cloud','ok');
  }catch(e){msg('ERROR: '+e.message,'bad')}
 }
 /* ---------------- tabs + prefill ---------------- */
-CFG.tab='shift';
+CFG.tab='soap';
 document.querySelectorAll('#tabs button').forEach(function(b){
  b.onclick=function(){
   document.querySelectorAll('#tabs button').forEach(function(x){x.classList.remove('on')});
@@ -326,33 +377,50 @@ document.querySelectorAll('#tabs button').forEach(function(b){
   $('dump').style.display='none';
  };
 });
-$('s-save').onclick=doShift;$('undo-shift').onclick=function(){undo('shift')};$('undo-soap').onclick=function(){undo('soap')};$('o-save').onclick=doWeights;$('q-save').onclick=doQc;$('d-save').onclick=doDate;$('read').onclick=doRead;
+$('o-save').onclick=doLine;$('q-save').onclick=doSettings;$('d-save').onclick=doShiftSettings;$('s-save').onclick=doShift;
+$('undo-shift').onclick=function(){undo('shift')};$('undo-soap').onclick=function(){undo('soap')};
+$('read').onclick=doRead;
 try{var sp=localStorage.getItem(KEY);if(sp)$('pin').value=sp}catch(e){}
 $('pin').onchange=function(){try{localStorage.setItem(KEY,$('pin').value)}catch(e){}};
-/* a link can carry the values: ?app=shift&shift=A&hour=10&r=25,0.1&p=14.5,0.05 */
+function showVarBox(){
+ var l3=$('o-line').value==='3';
+ $('o-varbox').hidden=!l3;
+}
+$('o-line').onchange=showVarBox;showVarBox();
+function setv(id,v){if(v!==null&&v!==undefined&&v!=='')$(id).value=v}
+function pick(sel,val_){var s=$(sel);for(var i=0;i<s.options.length;i++)if(s.options[i].value===val_)s.selectedIndex=i}
+/* a link can carry the values */
 (function(){
- var q=new URLSearchParams(location.search),app=q.get('app');
- if(app==='soap'){document.querySelector('#tabs button[data-t="soap"]').click()}
- if(q.get('shift')&&$('s-shift')){var sv=$('s-shift');for(var i=0;i<sv.options.length;i++)if(sv.options[i].value===q.get('shift'))sv.selectedIndex=i}
- if(q.get('hour'))$('s-hour').value=q.get('hour');
- var r=(q.get('r')||'').split(',');if(r[0])$('s-rm').value=r[0];if(r[1])$('s-rf').value=r[1];
- var p=(q.get('p')||'').split(',');if(p[0])$('s-pm').value=p[0];if(p[1])$('s-pf').value=p[1];
- var t=(q.get('t')||'').split(',');if(t[0])$('s-cl').value=t[0];if(t[1])$('s-gly').value=t[1];if(t[2])$('s-edta').value=t[2];if(t[3])$('s-tfm').value=t[3];
- if(q.get('oshift'))$('o-shift').value=q.get('oshift');
- if(q.get('line'))$('o-line').value=q.get('line');
- if(q.get('batch'))$('o-batch').value=q.get('batch');
- if(q.get('w'))$('o-w').value=q.get('w');
- if(q.get('fix')==='0')$('o-fix').checked=false;
- if(q.get('qshift'))$('q-shift').value=q.get('qshift');
- if(q.get('qline'))$('q-line').value=q.get('qline');
- if(q.get('chl'))$('q-chl').value=q.get('chl');
- if(q.get('gly'))$('q-gly').value=q.get('gly');
- if(q.get('tmp'))$('q-tmp').value=q.get('tmp');
- if(q.get('fa'))$('q-fa').value=q.get('fa');
- if(q.get('moi'))$('q-moi').value=q.get('moi');
- if(q.get('date'))$('d-date').value=q.get('date');
- if(q.get('dshift'))$('d-shift').value=q.get('dshift');
- if(q.get('go')==='1')setTimeout(function(){doShift()},400);
+ var q=new URLSearchParams(location.search);
+ if(q.get('app')==='shift'){document.querySelector('#tabs button[data-t="shift"]').click()}
+ if(q.get('vr'))pick('o-var',q.get('vr'));
+ if(q.get('oshift'))pick('o-shift',q.get('oshift'));
+ if(q.get('line')){pick('o-line',q.get('line'));showVarBox()}
+ if(q.get('batch'))pick('o-batch',q.get('batch'));
+ setv('o-w',q.get('w'));if(q.get('fix')==='0')$('o-fix').checked=false;
+ setv('o-p',q.get('p'));setv('o-bn',q.get('bn'));setv('o-m',q.get('m'));
+ setv('o-ffa',q.get('ffa'));setv('o-fa',q.get('fa'));
+ if(q.get('qshift'))pick('q-shift',q.get('qshift'));
+ if(q.get('qline'))pick('q-line',q.get('qline'));
+ setv('q-chl',q.get('chl'));setv('q-chlv',q.get('chlv'));
+ setv('q-gly',q.get('gly'));setv('q-glyv',q.get('glyv'));
+ setv('q-tmp',q.get('tmp'));setv('q-tmpv',q.get('tmpv'));
+ setv('q-amin',q.get('amin'));setv('q-amax',q.get('amax'));
+ if(q.get('dshift'))pick('d-shift',q.get('dshift'));
+ setv('d-date',q.get('date'));setv('d-var',q.get('var'));setv('d-tests',q.get('tests'));
+ if(q.get('shift'))pick('s-shift',q.get('shift'));
+ setv('s-hour',q.get('hour'));
+ var r=(q.get('r')||'').split(',');if(r[0])setv('s-rm',r[0]);if(r[1])setv('s-rf',r[1]);
+ var pp=(q.get('p')||'').split(',');if(pp[0])setv('s-pm',pp[0]);if(pp[1])setv('s-pf',pp[1]);
+ var t=(q.get('t')||'').split(',');if(t[0])setv('s-cl',t[0]);if(t[1])setv('s-gly',t[1]);if(t[2])setv('s-edta',t[2]);if(t[3])setv('s-tfm',t[3]);
+ if(q.get('go')==='1'){
+  setTimeout(function(){
+   if(CFG.tab==='shift')doShift();
+   else if(q.get('w')||q.get('bn')||q.get('m')||q.get('ffa')||q.get('fa')||q.get('p'))doLine();
+   else if(q.get('chl')||q.get('gly')||q.get('tmp')||q.get('amin')||q.get('amax'))doSettings();
+   else doShiftSettings();
+  },400);
+ }
 })();
 </script>
 </body>
