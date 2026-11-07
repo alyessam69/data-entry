@@ -162,10 +162,12 @@ function val(id){var v=$(id).value;return v===''||v===null?null:v}
 function num(v){var n=parseFloat(v);return isNaN(n)?null:n}
 function pin(){return ($('pin').value||'2780').trim()}
 function msg(t,kind){$('msg').innerHTML='<div class="msg '+(kind||'busy')+'">'+t+'</div>'}
-function tfm(v){  /* the app's own formula */
- var m=num(v[3]),fa=num(v[5]),cl=num(v[8]),g=num(v[9]),e=num(v[10]);
- if(m===null||fa===null||cl===null||g===null||e===null)return null;
- var sum=Math.round((m+fa+cl+g+e)*10000)/10000;
+function tfm(v){  /* the app's own formula - index.html tfmCore */
+ var m=num(v[3]),cl=num(v[8]),g=num(v[9]),e=num(v[10]);
+ if(m===null||cl===null||g===null||e===null)return null;  /* Moisture / Cl / Gly / EDTA are needed */
+ var f=num(v[4]),fa=num(v[5]);
+ var t=[m];if(f!==null)t.push(f);if(fa!==null)t.push(fa);t.push(cl,g,e);
+ var sum=0;t.forEach(function(x){sum+=x});sum=Math.round(sum*10000)/10000;
  return((100-sum)/1.086).toFixed(2);
 }
 function paper(v){
@@ -203,7 +205,10 @@ function setShift(plain,s,hour,vals){
  if(vals.gly!==null)v[9]=vals.gly;
  if(vals.edta!==null)v[10]=vals.edta;
  if(vals.tfm!==null){v[11]=vals.tfm;touched.push('TFM');rec.tm=1}
- else{var t=tfm(v);if(t!==null&&v[11]!==t){v[11]=t;touched.push('TFM (calculated)')}}
+ else if(v[11]===''||v[11]==='N/A'){      /* the app only fills the TFM when it is empty */
+  var t=tfm(v);
+  if(t!==null){v[11]=t;touched.push('TFM (calculated)')}
+ }
  if(rec.ck===undefined)rec.ck=true;
  plain.ts=Date.now();sh.ts=Date.now();
  return touched;
