@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2d4f70">
+<title>Lab Data Entry - Soap & Shift</title>
+<style>
+:root{--bg:#f3f4f7;--card:#fff;--ink:#1c2230;--mut:#6b7385;--line:#dde1ea;--acc:#2d4f70;--ok:#2e7d32;--bad:#c62828;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom,0px)}
+header{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);padding:10px 12px;z-index:5}
+h1{font-size:17px;margin:0 0 8px}
+.tabs{display:flex;gap:8px}
+.tabs button{flex:1;padding:10px 4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;font-size:14px;font-weight:600}
+.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{padding:12px;max-width:680px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:14px}
+h2{font-size:15px;margin:0 0 10px}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}
+input,select{font:inherit;font-size:15px;padding:9px;width:100%;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink)}
+.row{display:flex;gap:8px}.row>*{flex:1}
+button.act{width:100%;margin-top:12px;padding:13px;border:0;border-radius:11px;background:var(--acc);color:#fff;font-size:16px;font-weight:700}
+button.act.sec{background:transparent;color:var(--acc);border:1px solid var(--acc);font-size:14px;padding:9px}
+.hint{font-size:12px;color:var(--mut);margin-top:8px}
+.out{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#0f1218;color:#d7e3f4;border-radius:10px;padding:10px;margin-top:10px;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto}
+.msg{margin-top:10px;padding:11px;border-radius:10px;font-size:14px;font-weight:600}
+.msg.ok{background:#e7f4e8;color:var(--ok);border:1px solid #bfe0c2}
+.msg.bad{background:#fdeaea;color:var(--bad);border:1px solid #f3c2c2}
+.msg.busy{background:#eef2f8;color:var(--acc);border:1px solid var(--line)}
+pre.sum{background:#0f1218;color:#d7e3f4;border-radius:10px;padding:10px;font-size:12px;overflow:auto;max-height:260px}
+.pill{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--acc);border-radius:20px;padding:3px 9px;margin-left:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Lab Data Entry <span class="pill">cloud writer</span></h1>
+  <div class="tabs" id="tabs">
+    <button data-t="shift" class="on">Shift Hourly Report</button>
+    <button data-t="soap">Soap Bar Daily Log</button>
+  </div>
+</header>
+<main>
+  <div class="card">
+    <label>PIN (the cloud encryption PIN - default 2780)</label>
+    <input id="pin" type="text" inputmode="numeric" value="2780">
+    <div class="hint" id="net"></div>
+  </div>
+
+  <!-- ================= SHIFT ================= -->
+  <section id="p-shift">
+    <div class="card">
+      <h2>One hour of the shift</h2>
+      <div class="row">
+        <div><label>Shift</label><select id="s-shift"><option value="A">A (09:00-15:00)</option><option value="B">B (17:00-23:00)</option><option value="C">C (01:00-07:00)</option></select></div>
+        <div><label>Hour</label><input id="s-hour" type="number" min="0" max="23" value="10"></div>
+      </div>
+      <div class="row">
+        <div><label>Reactor moisture %</label><input id="s-rm" type="number" step="0.001" inputmode="decimal"></div>
+        <div><label>Reactor FA %</label><input id="s-rf" type="number" step="0.001" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>Plodder moisture %</label><input id="s-pm" type="number" step="0.001" inputmode="decimal"></div>
+        <div><label>Plodder FA %</label><input id="s-pf" type="number" step="0.001" inputmode="decimal"></div>
+      </div>
+      <label>Plodder analysis (optional) - CL, Gly, EDTA, TFM</label>
+      <div class="row"><input id="s-cl" type="number" step="0.001" inputmode="decimal" placeholder="CL"><input id="s-gly" type="number" step="0.001" inputmode="decimal" placeholder="Gly"><input id="s-edta" type="number" step="0.001" inputmode="decimal" placeholder="EDTA"><input id="s-tfm" type="number" step="0.001" inputmode="decimal" placeholder="TFM"></div>
+      <div class="hint">Leave the boxes empty to keep the value that is already in the cloud. The TFM is recalculated automatically from the moisture, FA, CL, Gly and EDTA (same formula as the app) unless you type it.</div>
+      <button class="act" id="s-save">Save this hour to the cloud</button>
+      <div class="hint">The TFM is recalculated for you - type a TFM only if you want to keep your own number.</div>
+    </div>
+  </section>
+
+  <!-- ================= SOAP ================= -->
+  <section id="p-soap" hidden>
+    <div class="card">
+      <h2>Line weights</h2>
+      <div class="row">
+        <div><label>Shift</label><select id="o-shift"><option value="1">1 (A)</option><option value="2">2 (B)</option><option value="3">3 (C)</option></select></div>
+        <div><label>Line</label><select id="o-line"><option value="1">1</option><option value="2">2</option><option value="3">3 (Royal)</option></select></div>
+        <div><label>Batch</label><select id="o-batch"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+      </div>
+      <label>Weights (comma separated) - the scale reads one decimal, so tick +0.01</label>
+      <input id="o-w" type="text" inputmode="decimal" placeholder="109.5,109.6,109.7">
+      <label class="hint" style="display:flex;align-items:center;gap:6px;margin-top:6px"><input id="o-fix" type="checkbox" style="width:auto" checked> add 0.01 to the paper weight (109.5 &rarr; 109.51)</label>
+      <button class="act" id="o-save">Save the weights to the cloud</button>
+    </div>
+    <div class="card">
+      <h2>Line analysis (QC)</h2>
+      <div class="row">
+        <div><label>Shift</label><select id="q-shift"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+        <div><label>Line</label><select id="q-line"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+      </div>
+      <div class="row"><input id="q-chl" type="number" step="0.001" inputmode="decimal" placeholder="Cl"><input id="q-gly" type="number" step="0.001" inputmode="decimal" placeholder="Gly"><input id="q-tmp" type="number" step="0.001" inputmode="decimal" placeholder="Temp"></div>
+      <div class="row"><input id="q-fa" type="number" step="0.001" inputmode="decimal" placeholder="FA"><input id="q-moi" type="number" step="0.001" inputmode="decimal" placeholder="Moisture"></div>
+      <button class="act" id="q-save">Save the analysis to the cloud</button>
+    </div>
+    <div class="card">
+      <h2>Date of a shift</h2>
+      <div class="row">
+        <div><label>Shift</label><select id="d-shift"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+        <div><label>Date</label><input id="d-date" type="text" placeholder="DD/MM/YYYY"></div>
+      </div>
+      <button class="act sec" id="d-save">Save the date</button>
+    </div>
+  </section>
+
+  <div class="card">
+    <h2>What is in the cloud now</h2>
+    <button class="act sec" id="read">Read the cloud</button>
+    <pre class="sum" id="dump" style="display:none"></pre>
+  </div>
+  <div class="card">
+    <h2>Links with the values already filled</h2>
+    <div class="hint" style="margin:0">
+      Shift hour (moisture / FA of the reactor and the plodder, then the analysis CL / Gly / EDTA / TFM):<br>
+      <code>?app=shift&amp;shift=A&amp;hour=10&amp;r=25,0.1&amp;p=14.5,0.05&amp;t=0.6,8.2,0.07</code><br>
+      <code>&amp;go=1</code> saves it as soon as the page opens (the page still asks to confirm).<br><br>
+      Soap weights: <code>?app=soap&amp;oshift=1&amp;line=1&amp;batch=1&amp;w=109.5,109.6&amp;fix=1</code><br>
+      Soap analysis: <code>?app=soap&amp;qshift=1&amp;qline=1&amp;chl=0.6&amp;gly=8.2&amp;tmp=38&amp;fa=1.2&amp;moi=16.5</code><br>
+      Date: <code>?app=soap&amp;dshift=1&amp;date=07/11/2026</code><br><br>
+      The page only changes the boxes you filled - everything else in the cloud stays as it is.
+    </div>
+  </div>
+  <div id="msg"></div>
+</main>
+<script>
+/* ---------------- config ---------------- */
+var CFG={
+ shift:{url:'https://soap-lab-shift-sync-default-rtdb.europe-west1.firebasedatabase.app/lab/shift-40266e02ffb7ac507bcc846a.json'},
+ soap:{url:'https://soap-lab-shift-sync-default-rtdb.europe-west1.firebasedatabase.app/lab/soap-log-7c4e19a83b2f46d0a95e17cb.json'}
+};
+var KEY='labdata_pin_v1';
+/* ---------------- crypto helpers ---------------- */
+function b64(b){var s='',i;for(i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s)}
+function unb64(s){var b=atob(s),a=new Uint8Array(b.length),i;for(i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+async function key(saltB64,pin){
+ var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveKey']);
+ return crypto.subtle.deriveKey({name:'PBKDF2',salt:unb64(saltB64),iterations:120000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function pull(url,pin){
+ var r=await fetch(url+'?cb='+Date.now(),{cache:'no-store'});
+ if(!r.ok)throw new Error('HTTP '+r.status+' reading the cloud');
+ var body=await r.json();
+ if(!body||body.enc!=='aesgcm')throw new Error('the cloud document is not encrypted');
+ var k=await key(body.salt,pin);
+ var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(body.iv)},k,unb64(body.ct));
+ return{body:body,plain:JSON.parse(new TextDecoder().decode(pt))};
+}
+async function push(url,body,plain,pin){
+ var k=await key(body.salt,pin);                 /* the same salt - the apps keep it */
+ var iv=crypto.getRandomValues(new Uint8Array(12));
+ var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,new TextEncoder().encode(JSON.stringify(plain)));
+ var out={v:body.v||1,sv:body.sv,enc:'aesgcm',salt:body.salt,iv:b64(iv),ct:b64(new Uint8Array(ct))};
+ var r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(out)});
+ if(!r.ok)throw new Error('HTTP '+r.status+' writing the cloud');
+ return out;
+}
+/* ---------------- helpers ---------------- */
+function $(id){return document.getElementById(id)}
+function val(id){var v=$(id).value;return v===''||v===null?null:v}
+function num(v){var n=parseFloat(v);return isNaN(n)?null:n}
+function pin(){return ($('pin').value||'2780').trim()}
+function msg(t,kind){$('msg').innerHTML='<div class="msg '+(kind||'busy')+'">'+t+'</div>'}
+function tfm(v){  /* the app's own formula */
+ var m=num(v[3]),fa=num(v[5]),cl=num(v[8]),g=num(v[9]),e=num(v[10]);
+ if(m===null||fa===null||cl===null||g===null||e===null)return null;
+ var sum=Math.round((m+fa+cl+g+e)*10000)/10000;
+ return((100-sum)/1.086).toFixed(2);
+}
+function paper(v){
+ var s=String(v).trim(),dec=(s.split('.')[1]||'').length;
+ if(dec===1)return s+'1';
+ if(dec===0)return s+'.01';
+ return s;
+}
+function soapBucket(id,variant){
+ var v=/l3/.test(id)?(variant==='lemon'?'L':'R'):'';
+ var m=id.match(/s(\d)b\d/);if(m)return'S'+m[1]+v;
+ m=id.match(/^(?:date|var|tests)(\d)/);if(m)return'S'+m[1]+v;
+ m=id.match(/^[a-z]+(\d)l\d/);if(m)return'S'+m[1]+v;
+ return'G'+v;
+}
+function setField(plain,bucket,key,value){
+ var b=(plain.b=plain.b||{})[bucket]||((plain.b[bucket]={v:{},t:{}}));
+ b.v=b.v||{};b.v[key]=String(value);
+ (plain.ts=plain.ts||{})[bucket]=Date.now();
+}
+function setShift(plain,s,hour,vals){
+ var sh=(plain.shifts=plain.shifts||{})[s];
+ if(!sh)throw new Error('no shift '+s);
+ var d=(sh.d=sh.d||{}),rec=d[hour]||(d[hour]={ck:true,t3:'',t3m:'',v:[],tm:0});
+ var v=rec.v||(rec.v=[]);
+ while(v.length<12)v.push('');
+ if(v[1]==='')v[1]='N/A';
+ if(v[4]==='')v[4]='N/A';
+ var touched=[];
+ if(vals.rm!==null){v[0]=vals.rm;touched.push('reactor moisture')}
+ if(vals.rf!==null){v[2]=vals.rf;touched.push('reactor FA')}
+ if(vals.pm!==null){v[3]=vals.pm;touched.push('plodder moisture')}
+ if(vals.pf!==null){v[5]=vals.pf;touched.push('plodder FA')}
+ if(vals.cl!==null)v[8]=vals.cl;
+ if(vals.gly!==null)v[9]=vals.gly;
+ if(vals.edta!==null)v[10]=vals.edta;
+ if(vals.tfm!==null){v[11]=vals.tfm;touched.push('TFM');rec.tm=1}
+ else{var t=tfm(v);if(t!==null&&v[11]!==t){v[11]=t;touched.push('TFM (calculated)')}}
+ if(rec.ck===undefined)rec.ck=true;
+ plain.ts=Date.now();sh.ts=Date.now();
+ return touched;
+}
+/* ---------------- actions ---------------- */
+async function doShift(){
+ var s=$('s-shift').value,hour=String(parseInt($('s-hour').value,10)||0);
+ var vals={rm:val('s-rm'),rf:val('s-rf'),pm:val('s-pm'),pf:val('s-pf'),cl:val('s-cl'),gly:val('s-gly'),edta:val('s-edta'),tfm:val('s-tfm')};
+ var any=Object.keys(vals).some(function(k){return vals[k]!==null});
+ if(!any){msg('Fill at least one value first.','bad');return}
+ var c=CFG.shift,p=pin();
+ if(!confirm('Save these values to the cloud for shift '+s+' hour '+hour+':00?\n\n'+JSON.stringify(vals)+'\n\n(the other values of that hour stay as they are)'))return;
+ msg('Saving...','busy');
+ try{
+  var got=await pull(c.url,p);
+  var touched=setShift(got.plain,s,hour,vals);
+  var before=JSON.stringify(got.plain.shifts[s].d[hour].v);
+  await push(c.url,got.body,got.plain,p);
+  var back=await pull(c.url,p);
+  var same=JSON.stringify(back.plain.shifts[s].d[hour].v)===before;
+  msg('Saved to the cloud'+(same?'':' - CHECK IT')+' - shift '+s+' '+hour+':00\nchanged: '+(touched.length?touched.join(', '):'nothing')+'\n'+JSON.stringify(back.plain.shifts[s].d[hour].v),same?'ok':'bad');
+ }catch(e){msg('ERROR: '+e.message,'bad')}
+}
+async function doWeights(){
+ var sh=$('o-shift').value,ln=$('o-line').value,bt=$('o-batch').value;
+ var vals=($('o-w').value||'').split(',').map(function(s){return s.trim()}).filter(function(s){return s!==''});
+ if(!vals.length){msg('Type at least one weight.','bad');return}
+ var fix=$('o-fix').checked;
+ var c=CFG.soap,p=pin();
+ var text=vals.map(function(v){return fix?paper(v):v}).join(', ');
+ if(!confirm('Save these weights to the cloud?\n\nline '+ln+' - shift '+sh+' - batch '+bt+'\n'+text+'\n\n(the batch number and the other weights stay as they are)'))return;
+ msg('Saving...','busy');
+ try{
+  var got=await pull(c.url,p);
+  var variant='royal';
+  vals.forEach(function(v,i){setField(got.plain,soapBucket('l'+ln+'s'+sh+'b'+bt+'_c'+i,variant),'l'+ln+'s'+sh+'b'+bt+'_c'+i,fix?paper(v):v)});
+  await push(c.url,got.body,got.plain,p);
+  var back=await pull(c.url,p);
+  var bk=soapBucket('l'+ln+'s'+sh+'b'+bt+'_c0',variant);
+  var got2=JSON.stringify((back.plain.b[bk]||{v:{}}).v);
+  msg('Saved to the cloud\n'+got2,'ok');
+ }catch(e){msg('ERROR: '+e.message,'bad')}
+}
+async function doQc(){
+ var sh=$('q-shift').value,ln=$('q-line').value;
+ var map={chl:'q-chl',gly:'q-gly',tmp:'q-tmp',fa:'q-fa',moi:'q-moi'},vals={},any=false;
+ for(var k in map){var v=val(map[k]);if(v!==null){vals[k]=v;any=true}}
+ if(!any){msg('Fill at least one analysis value.','bad');return}
+ var c=CFG.soap,p=pin();
+ if(!confirm('Save this analysis to the cloud?\n\nline '+ln+' - shift '+sh+'\n'+JSON.stringify(vals)))return;
+ msg('Saving...','busy');
+ try{
+  var got=await pull(c.url,p);
+  for(var k2 in vals)setField(got.plain,soapBucket(k2+sh+'l'+ln,'royal'),k2+sh+'l'+ln,vals[k2]);
+  await push(c.url,got.body,got.plain,p);
+  var back=await pull(c.url,p);
+  var out={};
+  for(var k3 in vals){var bk=soapBucket(k3+sh+'l'+ln,'royal');out[k3]=(back.plain.b[bk]||{v:{}}).v[k3+sh+'l'+ln]}
+  msg('Saved to the cloud\n'+JSON.stringify(out),'ok');
+ }catch(e){msg('ERROR: '+e.message,'bad')}
+}
+async function doDate(){
+ var sh=$('d-shift').value,d=($('d-date').value||'').trim();
+ if(!d){msg('Type the date (DD/MM/YYYY).','bad');return}
+ var c=CFG.soap,p=pin();
+ if(!confirm('Save the date '+d+' for shift '+sh+'?'))return;
+ msg('Saving...','busy');
+ try{
+  var got=await pull(c.url,p);
+  setField(got.plain,soapBucket('date'+sh,'royal'),'date'+sh,d);
+  await push(c.url,got.body,got.plain,p);
+  msg('Saved to the cloud','ok');
+ }catch(e){msg('ERROR: '+e.message,'bad')}
+}
+async function doRead(){
+ msg('Reading...','busy');
+ try{
+  var c=CFG.tab==='soap'?CFG.soap:CFG.shift,p=pin();
+  var got=await pull(c.url,p);
+  var d=$('dump');d.style.display='block';
+  d.textContent=JSON.stringify(got.plain,null,1);
+  msg('Read '+c.tab+' from the cloud','ok');
+ }catch(e){msg('ERROR: '+e.message,'bad')}
+}
+/* ---------------- tabs + prefill ---------------- */
+CFG.tab='shift';
+document.querySelectorAll('#tabs button').forEach(function(b){
+ b.onclick=function(){
+  document.querySelectorAll('#tabs button').forEach(function(x){x.classList.remove('on')});
+  b.classList.add('on');
+  CFG.tab=b.getAttribute('data-t');
+  $('p-shift').hidden=CFG.tab!=='shift';$('p-soap').hidden=CFG.tab!=='soap';
+  $('dump').style.display='none';
+ };
+});
+$('s-save').onclick=doShift;$('o-save').onclick=doWeights;$('q-save').onclick=doQc;$('d-save').onclick=doDate;$('read').onclick=doRead;
+try{var sp=localStorage.getItem(KEY);if(sp)$('pin').value=sp}catch(e){}
+$('pin').onchange=function(){try{localStorage.setItem(KEY,$('pin').value)}catch(e){}};
+/* a link can carry the values: ?app=shift&shift=A&hour=10&r=25,0.1&p=14.5,0.05 */
+(function(){
+ var q=new URLSearchParams(location.search),app=q.get('app');
+ if(app==='soap'){document.querySelector('#tabs button[data-t="soap"]').click()}
+ if(q.get('shift')&&$('s-shift')){var sv=$('s-shift');for(var i=0;i<sv.options.length;i++)if(sv.options[i].value===q.get('shift'))sv.selectedIndex=i}
+ if(q.get('hour'))$('s-hour').value=q.get('hour');
+ var r=(q.get('r')||'').split(',');if(r[0])$('s-rm').value=r[0];if(r[1])$('s-rf').value=r[1];
+ var p=(q.get('p')||'').split(',');if(p[0])$('s-pm').value=p[0];if(p[1])$('s-pf').value=p[1];
+ var t=(q.get('t')||'').split(',');if(t[0])$('s-cl').value=t[0];if(t[1])$('s-gly').value=t[1];if(t[2])$('s-edta').value=t[2];if(t[3])$('s-tfm').value=t[3];
+ if(q.get('oshift'))$('o-shift').value=q.get('oshift');
+ if(q.get('line'))$('o-line').value=q.get('line');
+ if(q.get('batch'))$('o-batch').value=q.get('batch');
+ if(q.get('w'))$('o-w').value=q.get('w');
+ if(q.get('fix')==='0')$('o-fix').checked=false;
+ if(q.get('qshift'))$('q-shift').value=q.get('qshift');
+ if(q.get('qline'))$('q-line').value=q.get('qline');
+ if(q.get('chl'))$('q-chl').value=q.get('chl');
+ if(q.get('gly'))$('q-gly').value=q.get('gly');
+ if(q.get('tmp'))$('q-tmp').value=q.get('tmp');
+ if(q.get('fa'))$('q-fa').value=q.get('fa');
+ if(q.get('moi'))$('q-moi').value=q.get('moi');
+ if(q.get('date'))$('d-date').value=q.get('date');
+ if(q.get('dshift'))$('d-shift').value=q.get('dshift');
+ if(q.get('go')==='1')setTimeout(function(){doShift()},400);
+})();
+</script>
+</body>
+</html>
