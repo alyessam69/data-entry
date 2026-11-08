@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2d4f70">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lab Data Entry">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Lab Data Entry - Soap & Shift</title>
 <style>
 :root{--bg:#f3f4f7;--card:#fff;--ink:#1c2230;--mut:#6b7385;--line:#dde1ea;--acc:#2d4f70;--ok:#2e7d32;--bad:#c62828;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
@@ -30,12 +37,20 @@ button.act.sec{background:transparent;color:var(--acc);border:1px solid var(--ac
 .msg.busy{background:#eef2f8;color:var(--acc);border:1px solid var(--line)}
 pre.sum{background:#0f1218;color:#d7e3f4;border-radius:10px;padding:10px;font-size:12px;overflow:auto;max-height:260px}
 .pill{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--acc);border-radius:20px;padding:3px 9px;margin-left:6px}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.hrow h1{margin:0}
+.inst{border:0;border-radius:10px;background:var(--acc);color:#fff;font-size:13px;font-weight:700;padding:8px 13px;white-space:nowrap}
+.inst[hidden]{display:none}
+.inst:active{transform:translateY(1px)}
 code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background:#eef1f6;padding:1px 4px;border-radius:4px;word-break:break-all}
 </style>
 </head>
 <body>
 <header>
-  <h1>Lab Data Entry <span class="pill">cloud writer</span></h1>
+  <div class="hrow">
+    <h1>Lab Data Entry <span class="pill">cloud writer</span></h1>
+    <button class="inst" id="install-btn" hidden onclick="installApp()">⬇️ Install app</button>
+  </div>
   <div class="tabs" id="tabs">
     <button data-t="soap" class="on">Soap Bar Daily Log</button>
     <button data-t="shift">Shift Hourly Report</button>
@@ -423,6 +438,35 @@ function pick(sel,val_){var s=$(sel);for(var i=0;i<s.options.length;i++)if(s.opt
    else if(q.get('chl')||q.get('gly')||q.get('tmp')||q.get('amin')||q.get('amax'))doSettings();
    else doShiftSettings();
   },400);
+ }
+})();
+/* ---------------- PWA: install button + service worker ---------------- */
+(function(){
+ var installPrompt=null;
+ var isStandalone=function(){return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true};
+ var isIOS=function(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)};
+ function showInstallBtn(label){var b=document.getElementById('install-btn');if(b&&!isStandalone()){b.textContent=label;b.hidden=false}}
+ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installPrompt=e;showInstallBtn('⬇️ Install app')});
+ window.addEventListener('appinstalled',function(){installPrompt=null;var b=document.getElementById('install-btn');if(b)b.hidden=true});
+ window.installApp=async function(){
+  var b=document.getElementById('install-btn');
+  if(installPrompt){
+   installPrompt.prompt();
+   var outcome='dismissed';
+   try{outcome=(await installPrompt.userChoice).outcome}catch(err){}
+   installPrompt=null;
+   if(outcome==='accepted'){if(b)b.hidden=true}
+   else if(b)b.textContent='⬇️ Install app';
+   return;
+  }
+  alert(isIOS()
+   ?'To install on iPhone:\n\n1. Tap the Share button  ⬆️\n2. Scroll down → "Add to Home Screen"\n3. Tap "Add"\n\nIt will then open like an app, offline included.'
+   :'To install:\n\n• Android (Chrome): ⋮ menu → "Install app" or "Add to Home screen"\n• iPhone (Safari): Share ⬆️ → "Add to Home Screen"\n• Desktop Chrome: install icon in the address bar');
+ };
+ if(isIOS())showInstallBtn('📲 Add to Home Screen');
+ if(isStandalone()){var sb=document.getElementById('install-btn');if(sb)sb.hidden=true}
+ if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){})});
  }
 })();
 </script>
