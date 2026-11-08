@@ -152,7 +152,7 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background
 /* ---------------- config ---------------- */
 var CFG={
  shift:{url:'https://soap-lab-shift-sync-default-rtdb.europe-west1.firebasedatabase.app/lab/shift-40266e02ffb7ac507bcc846a.json'},
- soap:{url:'https://soap-lab-shift-sync-default-rtdb.europe-west1.firebasedatabase.app/lab/soap-log-7c4e19a83b2f46d0a95e17cb.json'}
+ soap:{url:'https://soap-lab-shift-sync-default-rtdb.europe-west1.firebasedatabase.app/lab/soap-pro-v2-9f8e4d2c1b7a6053e4d89a12.json'}
 };
 var KEY='labdata_pin_v1';
 /* ---------------- crypto helpers ---------------- */
@@ -202,8 +202,11 @@ function soapBucket(id,variant){
 }
 function setField(plain,bucket,key,value){
  var b=(plain.b=plain.b||{})[bucket]||((plain.b[bucket]={v:{},t:{}}));
- b.v=b.v||{};b.v[key]=String(value);
- (plain.ts=plain.ts||{})[bucket]=Date.now();
+ b.v=b.v||{};b.t=b.t||{};
+ var now=Date.now();
+ b.v[key]=String(value);
+ b.t[key]=now;              /* the Pro app keeps a time per field - without it the phone ignores the value */
+ (plain.ts=plain.ts||{})[bucket]=now;
 }
 function backup(app,plain){try{localStorage.setItem('labdata_bak_'+app,JSON.stringify({plain:JSON.parse(JSON.stringify(plain)),ts:Date.now()}));showUndo(app)}catch(e){}}
 async function undo(app){
